@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎮 Pong Game</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 20px 0 10px;
+    }
+
+    canvas {
+      background: #000;
+      border: 3px solid white;
+      display: block;
+      margin: 20px auto;
+      max-width: 95%;
+      touch-action: none;
+    }
+
+    button {
+      padding: 10px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 10px auto 20px;
+    }
+
+    .controls button {
+      width: 100px;
+      font-size: 24px;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🎮 Pong Game</h1>
+  <p>Computer keyboard par <b>W</b> aur <b>S</b> dabayein, ya mobile par buttons use karein</p>
+
+  <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+  <div class="controls">
+    <button id="upButton">▲</button>
+    <button id="downButton">▼</button>
+  </div>
+
+  <button onclick="restartGame()">Restart Game</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Player
+    const player = {
+      x: 20,
+      y: 180,
+      width: 12,
+      height: 90,
+      speed: 7,
+      score: 0
+    };
+
+    // Computer
+    const computer = {
+      x: canvas.width - 32,
+      y: 180,
+      width: 12,
+      height: 90,
+      speed: 4,
+      score: 0
+    };
+
+    // Ball
+    const ball = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 9,
+      speedX: 5,
+      speedY: 4
+    };
+
+    let keys = {};
+
+    document.addEventListener("keydown", (e) => {
+      keys[e.key.toLowerCase()] = true;
+    });
+
+    document.addEventListener("keyup", (e) => {
+      keys[e.key.toLowerCase()] = false;
+    });
+
+    function startTouchControl(key) {
+      keys[key] = true;
+    }
+
+    function stopTouchControl(key) {
+      keys[key] = false;
+    }
+
+    const upButton = document.getElementById("upButton");
+    const downButton = document.getElementById("downButton");
+
+    upButton.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      startTouchControl("w");
+    });
+
+    upButton.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      stopTouchControl("w");
+    });
+
+    downButton.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      startTouchControl("s");
+    });
+
+    downButton.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      stopTouchControl("s");
+    });
+
+    upButton.addEventListener("mousedown", () => startTouchControl("w"));
+    upButton.addEventListener("mouseup", () => stopTouchControl("w"));
+    upButton.addEventListener("mouseleave", () => stopTouchControl("w"));
+
+    downButton.addEventListener("mousedown", () => startTouchControl("s"));
+    downButton.addEventListener("mouseup", () => stopTouchControl("s"));
+    downButton.addEventListener("mouseleave", () => stopTouchControl("s"));
+
+    function drawRect(x, y, width, height) {
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, width, height);
+    }
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = "white";
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function drawCenterLine() {
+      ctx.setLineDash([10, 10]);
+      ctx.strokeStyle = "white";
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawScore() {
+      ctx.font = "40px Arial";
+      ctx.fillText(player.score, canvas.width / 2 - 70, 50);
+      ctx.fillText(computer.score, canvas.width / 2 + 50, 50);
+    }
+
+    function update() {
+
+      // Player movement
+      if (keys["w"] && player.y > 0) {
+        player.y -= player.speed;
+      }
+
+      if (keys["s"] && player.y + player.height < canvas.height) {
+        player.y += player.speed;
+      }
+
+      // Computer follows ball
+      if (computer.y + computer.height / 2 < ball.y) {
+        computer.y += computer.speed;
+      } else {
+        computer.y -= computer.speed;
+      }
+
+      // Keep computer inside canvas
+      computer.y = Math.max(
+        0,
+        Math.min(canvas.height - computer.height, computer.y)
+      );
+
+      // Move ball
+      ball.x += ball.speedX;
+      ball.y += ball.speedY;
+
+      // Top and bottom collision
+      if (
+        ball.y - ball.radius <= 0 ||
+        ball.y + ball.radius >= canvas.height
+      ) {
+        ball.speedY *= -1;
+      }
+
+      // Player collision
+      if (
+        ball.x - ball.radius <= player.x + player.width &&
+        ball.y >= player.y &&
+        ball.y <= player.y + player.height &&
+        ball.speedX < 0
+      ) {
+        ball.speedX *= -1;
+      }
+
+      // Computer collision
+      if (
+        ball.x + ball.radius >= computer.x &&
+        ball.y >= computer.y &&
+        ball.y <= computer.y + computer.height &&
+        ball.speedX > 0
+      ) {
+        ball.speedX *= -1;
+      }
+
+      // Computer scores
+      if (ball.x < 0) {
+        computer.score++;
+        resetBall();
+      }
+
+      // Player scores
+      if (ball.x > canvas.width) {
+        player.score++;
+        resetBall();
+      }
+    }
+
+    function resetBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+
+      ball.speedX = Math.random() > 0.5 ? 5 : -5;
+      ball.speedY = Math.random() > 0.5 ? 4 : -4;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawCenterLine();
+      drawRect(player.x, player.y, player.width, player.height);
+      drawRect(computer.x, computer.y, computer.width, computer.height);
+      drawBall();
+      drawScore();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function restartGame() {
+      player.score = 0;
+      computer.score = 0;
+      player.y = 180;
+      computer.y = 180;
+      resetBall();
+    }
+
+    gameLoop();
+  </script>
+
+</body>
+  </html>
+
