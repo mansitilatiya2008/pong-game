@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Pong Game</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 20px 0 10px;
+    }
+
+    canvas {
+      background: #000;
+      border: 3px solid white;
+      display: block;
+      margin: 20px auto;
+      max-width: 95%;
+    }
+
+    p {
+      font-size: 16px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🏓 My Pong Game</h1>
+  <p>Use W/S to move the left paddle</p>
+
+  <canvas id="game" width="800" height="500"></canvas>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    // Paddle settings
+    const paddleWidth = 12;
+    const paddleHeight = 100;
+
+    let playerY = canvas.height / 2 - paddleHeight / 2;
+    let computerY = canvas.height / 2 - paddleHeight / 2;
+
+    // Ball settings
+    let ballX = canvas.width / 2;
+    let ballY = canvas.height / 2;
+    let ballSize = 12;
+
+    let ballSpeedX = 5;
+    let ballSpeedY = 4;
+
+    // Scores
+    let playerScore = 0;
+    let computerScore = 0;
+
+    // Keyboard controls
+    let upPressed = false;
+    let downPressed = false;
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key.toLowerCase() === "w") {
+        upPressed = true;
+      }
+
+      if (event.key.toLowerCase() === "s") {
+        downPressed = true;
+      }
+    });
+
+    document.addEventListener("keyup", function(event) {
+      if (event.key.toLowerCase() === "w") {
+        upPressed = false;
+      }
+
+      if (event.key.toLowerCase() === "s") {
+        downPressed = false;
+      }
+    });
+
+    function drawPaddle(x, y) {
+      ctx.fillStyle = "white";
+      ctx.fillRect(x, y, paddleWidth, paddleHeight);
+    }
+
+    function drawBall() {
+      ctx.fillStyle = "white";
+      ctx.fillRect(ballX, ballY, ballSize, ballSize);
+    }
+
+    function drawScore() {
+      ctx.font = "40px Arial";
+      ctx.fillText(playerScore, canvas.width / 2 - 80, 60);
+      ctx.fillText(computerScore, canvas.width / 2 + 60, 60);
+    }
+
+    function drawCenterLine() {
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(canvas.width / 2, 0);
+      ctx.lineTo(canvas.width / 2, canvas.height);
+      ctx.strokeStyle = "white";
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function resetBall() {
+      ballX = canvas.width / 2;
+      ballY = canvas.height / 2;
+
+      ballSpeedX = -ballSpeedX;
+      ballSpeedY = 4 * (Math.random() > 0.5 ? 1 : -1);
+    }
+
+    function update() {
+
+      // Player movement
+      if (upPressed) {
+        playerY -= 7;
+      }
+
+      if (downPressed) {
+        playerY += 7;
+      }
+
+      // Keep player paddle inside canvas
+      playerY = Math.max(0, Math.min(canvas.height - paddleHeight, playerY));
+
+      // Simple computer AI
+      let computerCenter = computerY + paddleHeight / 2;
+
+      if (computerCenter < ballY) {
+        computerY += 4;
+      } else {
+        computerY -= 4;
+      }
+
+      computerY = Math.max(
+        0,
+        Math.min(canvas.height - paddleHeight, computerY)
+      );
+
+      // Move ball
+      ballX += ballSpeedX;
+      ballY += ballSpeedY;
+
+      // Top and bottom collision
+      if (ballY <= 0 || ballY + ballSize >= canvas.height) {
+        ballSpeedY = -ballSpeedY;
+      }
+
+      // Player paddle collision
+      if (
+        ballX <= 30 + paddleWidth &&
+        ballX >= 30 &&
+        ballY + ballSize >= playerY &&
+        ballY <= playerY + paddleHeight
+      ) {
+        ballSpeedX = Math.abs(ballSpeedX);
+      }
+
+      // Computer paddle collision
+      if (
+        ballX + ballSize >= canvas.width - 30 - paddleWidth &&
+        ballX <= canvas.width - 30 &&
+        ballY + ballSize >= computerY &&
+        ballY <= computerY + paddleHeight
+      ) {
+        ballSpeedX = -Math.abs(ballSpeedX);
+      }
+
+      // Computer scores
+      if (ballX < 0) {
+        computerScore++;
+        resetBall();
+      }
+
+      // Player scores
+      if (ballX > canvas.width) {
+        playerScore++;
+        resetBall();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawCenterLine();
+      drawScore();
+
+      drawPaddle(30, playerY);
+      drawPaddle(canvas.width - 42, computerY);
+
+      drawBall();
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+
+</body>
+</html>
