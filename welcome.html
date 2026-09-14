@@ -285,14 +285,14 @@
         ball.speedX = -Math.abs(ball.speedX);
       }
 
-      // Computer scores
-      if (ball.x < 0) {
+      // Computer scores when player misses
+      if (ball.x - ball radius <= 0) {
         computer.score++;
         resetBall();
       }
 
-      // Player scores
-      if (ball.x > canvas.width) {
+      // Player scores when computer misses
+      if (ball.x + ball radius >= canvas.width) {
         player.score++;
         resetBall();
       }
