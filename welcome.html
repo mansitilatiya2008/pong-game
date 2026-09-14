@@ -190,19 +190,19 @@
 
     // Score
     function drawScore() {
-      ctx.font = "40px Arial";
+      ctx.font = "24px Arial";
       ctx.fillStyle = "white";
 
       ctx.fillText(
-        player.score,
-        canvas.width / 2 - 70,
-        50
+     "you: " + player.score,
+        canvas.width / 2 - 170,
+        40
       );
 
       ctx.fillText(
-        computer.score,
+    "computer: " + computer.score,
         canvas.width / 2 + 50,
-        50
+        40
       );
     }
 
