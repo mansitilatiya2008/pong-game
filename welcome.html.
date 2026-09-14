@@ -35,9 +35,9 @@
       padding: 10px 20px;
       margin: 5px;
       font-size: 16px;
+      cursor: pointer;
       border: none;
       border-radius: 6px;
-      cursor: pointer;
     }
 
     .controls {
@@ -63,7 +63,9 @@
 
   <h1>🎮 Pong Game</h1>
 
-  <p>Use <b>W</b> and <b>S</b> or mobile buttons to move.</p>
+  <p>
+    Use <b>W</b> and <b>S</b> or mobile buttons to move your paddle.
+  </p>
 
   <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -112,7 +114,7 @@
     let gameStarted = false;
     let animationId = null;
 
-    // Keyboard controls
+    // Keyboard
     document.addEventListener("keydown", function(e) {
       keys[e.key.toLowerCase()] = true;
     });
@@ -123,7 +125,6 @@
 
     // Mobile controls
     function mobileControl(button, key) {
-
       button.addEventListener("pointerdown", function(e) {
         e.preventDefault();
         keys[key] = true;
@@ -178,10 +179,12 @@
     function drawCenterLine() {
       ctx.setLineDash([10, 10]);
       ctx.strokeStyle = "white";
+
       ctx.beginPath();
       ctx.moveTo(canvas.width / 2, 0);
       ctx.lineTo(canvas.width / 2, canvas.height);
       ctx.stroke();
+
       ctx.setLineDash([]);
     }
 
@@ -206,7 +209,7 @@
     // Update game
     function update() {
 
-      // Player movement
+      // Player
       if (keys["w"]) {
         player.y -= player.speed;
       }
@@ -248,11 +251,11 @@
         )
       );
 
-      // Move ball
+      // Ball movement
       ball.x += ball.speedX;
       ball.y += ball.speedY;
 
-      // Top and bottom collision
+      // Top / bottom collision
       if (
         ball.y - ball.radius <= 0 ||
         ball.y + ball.radius >= canvas.height
@@ -260,7 +263,7 @@
         ball.speedY *= -1;
       }
 
-      // Left paddle collision
+      // Left paddle
       if (
         ball.x - ball.radius <= player.x + player.width &&
         ball.x + ball.radius >= player.x &&
@@ -271,7 +274,7 @@
         ball.speedX = Math.abs(ball.speedX);
       }
 
-      // Right paddle collision
+      // Right paddle
       if (
         ball.x + ball.radius >= computer.x &&
         ball.x - ball.radius <= computer.x + computer.width &&
@@ -309,7 +312,6 @@
 
     // Draw everything
     function draw() {
-
       ctx.clearRect(
         0,
         0,
@@ -326,7 +328,6 @@
 
     // Game loop
     function gameLoop() {
-
       if (!gameStarted) {
         return;
       }
