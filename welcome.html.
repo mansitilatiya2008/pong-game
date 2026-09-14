@@ -32,30 +32,29 @@
     }
 
     button {
-      padding: 10px 25px;
+      padding: 10px 20px;
       margin: 5px;
       font-size: 16px;
-      cursor: pointer;
       border: none;
       border-radius: 6px;
+      cursor: pointer;
     }
 
     .controls {
       display: flex;
       justify-content: center;
       gap: 15px;
-      margin: 10px auto 20px;
+      margin: 10px;
     }
 
     .controls button {
       width: 100px;
       font-size: 24px;
-      user-select: none;
       touch-action: none;
     }
 
     .game-buttons {
-      margin: 10px;
+      margin: 15px;
     }
   </style>
 </head>
@@ -64,10 +63,7 @@
 
   <h1>🎮 Pong Game</h1>
 
-  <p>
-    Keyboard par <b>W</b> aur <b>S</b> dabayein,
-    ya mobile par buttons use karein.
-  </p>
+  <p>Use <b>W</b> and <b>S</b> or mobile buttons to move.</p>
 
   <canvas id="gameCanvas" width="800" height="450"></canvas>
 
@@ -78,6 +74,7 @@
 
   <div class="game-buttons">
     <button id="startButton">▶ Start Game</button>
+    <button id="stopButton">⏸ Stop Game</button>
     <button id="restartButton">🔄 Restart Game</button>
   </div>
 
@@ -115,7 +112,7 @@
     let gameStarted = false;
     let animationId = null;
 
-    // Keyboard
+    // Keyboard controls
     document.addEventListener("keydown", function(e) {
       keys[e.key.toLowerCase()] = true;
     });
@@ -125,57 +122,59 @@
     });
 
     // Mobile controls
-    function pressKey(key) {
-      keys[key] = true;
+    function mobileControl(button, key) {
+
+      button.addEventListener("pointerdown", function(e) {
+        e.preventDefault();
+        keys[key] = true;
+      });
+
+      button.addEventListener("pointerup", function(e) {
+        e.preventDefault();
+        keys[key] = false;
+      });
+
+      button.addEventListener("pointerleave", function() {
+        keys[key] = false;
+      });
     }
 
-    function releaseKey(key) {
-      keys[key] = false;
-    }
+    mobileControl(
+      document.getElementById("upButton"),
+      "w"
+    );
 
-    const upButton = document.getElementById("upButton");
-    const downButton = document.getElementById("downButton");
+    mobileControl(
+      document.getElementById("downButton"),
+      "s"
+    );
 
-    upButton.addEventListener("pointerdown", function(e) {
-      e.preventDefault();
-      pressKey("w");
-    });
-
-    upButton.addEventListener("pointerup", function(e) {
-      e.preventDefault();
-      releaseKey("w");
-    });
-
-    upButton.addEventListener("pointerleave", function() {
-      releaseKey("w");
-    });
-
-    downButton.addEventListener("pointerdown", function(e) {
-      e.preventDefault();
-      pressKey("s");
-    });
-
-    downButton.addEventListener("pointerup", function(e) {
-      e.preventDefault();
-      releaseKey("s");
-    });
-
-    downButton.addEventListener("pointerleave", function() {
-      releaseKey("s");
-    });
-
-    function drawRect(x, y, width, height) {
+    // Draw paddle
+    function drawPaddle(paddle) {
       ctx.fillStyle = "white";
-      ctx.fillRect(x, y, width, height);
+      ctx.fillRect(
+        paddle.x,
+        paddle.y,
+        paddle.width,
+        paddle.height
+      );
     }
 
+    // Draw ball
     function drawBall() {
       ctx.beginPath();
-      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.arc(
+        ball.x,
+        ball.y,
+        ball.radius,
+        0,
+        Math.PI * 2
+      );
       ctx.fillStyle = "white";
       ctx.fill();
     }
 
+    // Center line
     function drawCenterLine() {
       ctx.setLineDash([10, 10]);
       ctx.strokeStyle = "white";
@@ -186,44 +185,74 @@
       ctx.setLineDash([]);
     }
 
+    // Score
     function drawScore() {
       ctx.font = "40px Arial";
       ctx.fillStyle = "white";
-      ctx.fillText(player.score, canvas.width / 2 - 70, 50);
-      ctx.fillText(computer.score, canvas.width / 2 + 50, 50);
+
+      ctx.fillText(
+        player.score,
+        canvas.width / 2 - 70,
+        50
+      );
+
+      ctx.fillText(
+        computer.score,
+        canvas.width / 2 + 50,
+        50
+      );
     }
 
+    // Update game
     function update() {
 
-      // Player
-      if (keys["w"] && player.y > 0) {
+      // Player movement
+      if (keys["w"]) {
         player.y -= player.speed;
       }
 
-      if (
-        keys["s"] &&
-        player.y + player.height < canvas.height
-      ) {
+      if (keys["s"]) {
         player.y += player.speed;
       }
 
-      // Computer paddle
-      if (computer.y + computer.height / 2 < ball.y) {
+      // Keep player inside canvas
+      player.y = Math.max(
+        0,
+        Math.min(
+          canvas.height - player.height,
+          player.y
+        )
+      );
+
+      // Computer follows ball
+      if (
+        ball.y >
+        computer.y + computer.height / 2
+      ) {
         computer.y += computer.speed;
-      } else {
+      }
+
+      if (
+        ball.y <
+        computer.y + computer.height / 2
+      ) {
         computer.y -= computer.speed;
       }
 
+      // Keep computer inside canvas
       computer.y = Math.max(
         0,
-        Math.min(canvas.height - computer.height, computer.y)
+        Math.min(
+          canvas.height - computer.height,
+          computer.y
+        )
       );
 
-      // Ball
+      // Move ball
       ball.x += ball.speedX;
       ball.y += ball.speedY;
 
-      // Top / bottom
+      // Top and bottom collision
       if (
         ball.y - ball.radius <= 0 ||
         ball.y + ball.radius >= canvas.height
@@ -231,7 +260,7 @@
         ball.speedY *= -1;
       }
 
-      // Left paddle
+      // Left paddle collision
       if (
         ball.x - ball.radius <= player.x + player.width &&
         ball.x + ball.radius >= player.x &&
@@ -242,7 +271,7 @@
         ball.speedX = Math.abs(ball.speedX);
       }
 
-      // Right paddle
+      // Right paddle collision
       if (
         ball.x + ball.radius >= computer.x &&
         ball.x - ball.radius <= computer.x + computer.width &&
@@ -253,84 +282,115 @@
         ball.speedX = -Math.abs(ball.speedX);
       }
 
-      // Computer score
+      // Computer scores
       if (ball.x < 0) {
         computer.score++;
         resetBall();
       }
 
-      // Player score
+      // Player scores
       if (ball.x > canvas.width) {
         player.score++;
         resetBall();
       }
     }
 
+    // Reset ball
     function resetBall() {
       ball.x = canvas.width / 2;
       ball.y = canvas.height / 2;
 
-      ball.speedX = Math.random() > 0.5 ? 5 : -5;
-      ball.speedY = Math.random() > 0.5 ? 4 : -4;
+      ball.speedX =
+        Math.random() > 0.5 ? 5 : -5;
+
+      ball.speedY =
+        Math.random() > 0.5 ? 4 : -4;
     }
 
+    // Draw everything
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
       drawCenterLine();
-      drawRect(
-        player.x,
-        player.y,
-        player.width,
-        player.height
-      );
-
-      drawRect(
-        computer.x,
-        computer.y,
-        computer.width,
-        computer.height
-      );
-
+      drawPaddle(player);
+      drawPaddle(computer);
       drawBall();
       drawScore();
     }
 
+    // Game loop
     function gameLoop() {
-      if (!gameStarted) return;
+
+      if (!gameStarted) {
+        return;
+      }
 
       update();
       draw();
 
-      animationId = requestAnimationFrame(gameLoop);
+      animationId =
+        requestAnimationFrame(gameLoop);
     }
 
-    // Start button
-    document.getElementById("startButton").addEventListener("click", function() {
-      if (!gameStarted) {
+    // START
+    document
+      .getElementById("startButton")
+      .addEventListener("click", function() {
+
+        if (!gameStarted) {
+          gameStarted = true;
+          gameLoop();
+        }
+
+      });
+
+    // STOP
+    document
+      .getElementById("stopButton")
+      .addEventListener("click", function() {
+
+        gameStarted = false;
+
+        if (animationId !== null) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
+
+        draw();
+      });
+
+    // RESTART
+    document
+      .getElementById("restartButton")
+      .addEventListener("click", function() {
+
+        if (animationId !== null) {
+          cancelAnimationFrame(animationId);
+        }
+
+        player.score = 0;
+        computer.score = 0;
+
+        player.y =
+          canvas.height / 2 -
+          player.height / 2;
+
+        computer.y =
+          canvas.height / 2 -
+          computer.height / 2;
+
+        resetBall();
+
         gameStarted = true;
+
         gameLoop();
-      }
-    });
-
-    // Restart button
-    document.getElementById("restartButton").addEventListener("click", function() {
-      player.score = 0;
-      computer.score = 0;
-
-      player.y = canvas.height / 2 - player.height / 2;
-      computer.y = canvas.height / 2 - computer.height / 2;
-
-      resetBall();
-
-      gameStarted = true;
-
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-
-      gameLoop();
-    });
+      });
 
     // Initial screen
     draw();
